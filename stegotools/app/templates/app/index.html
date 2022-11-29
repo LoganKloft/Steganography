@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'app/index.css' %}">
+    <title>Stegotools</title>
+</head>
+<body>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <header>
+        <ul>
+            <li class="encode">encode</li>
+            <li class="stegotools">Stegotools</li>
+        </ul>
+    </header>
+    <main>
+        <div class="side-by-side-div">
+            <div class="upload-div">
+                <p class="image-text">Image</p>
+                <div class="u-icon-div">
+                    <!-- {% if file_url %}
+                        <img src="{{ file_url }}" alt="upload" class="full-image">
+                    {% else %}
+                        {% load static %}
+                        <img src="{% static 'app/export.png' %}" alt="upload" class="upload-icon">
+                    {% endif %} -->
+                    <img src="{% static 'app/export.png' %}" alt="upload" class="upload-icon">
+                </div>
+            </div>
+            <div class="exif-div">
+                <p class="exif-text">Exif Data</p>
+                <div class="q-icon-div">
+                    {% load static %}
+                    <img src="{% static 'app/question.png' %}" alt="exif information" class="question-icon">
+                    <form action="" id="exif-form" style="display: none;">
+
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="message-div">
+            <textarea type="text" name="message" id="message" rows="4" placeholder="enter message" form="exif-form"></textarea>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="image-upload-form" style="display: none;">
+            {% csrf_token %}
+            <input type="file" accept="image/*" name="upload" id="file">
+        </form>
+    </main>
+
+    <script>
+        fileInput = document.getElementById('file');
+        message = document.getElementById('message');
+        upload_div = document.querySelector('.upload-div');
+        upload_div.addEventListener('click', function () {
+            fileInput.click();
+        });
+
+        token = '{{csrf_token}}';
+        upload_image = document.querySelector('.upload-icon');
+
+        // upload_div.onmouseover = mouseOverUpload;
+        // upload_div.onmouseout = mouseOutUpload;
+
+        fileInput.addEventListener('change', function () {
+            // submit form
+            form = document.getElementById('image-upload-form');
+            // form.submit();
+
+            var formData = new FormData(form);
+            $.ajax({
+                url:'',
+                type:'POST',
+                data: formData,
+                dataType: 'json',
+                success: function (response) {
+                    upload_image.className = 'full-image';
+                    upload_image.src = '/media/' + response['name']
+                },
+                error: function (response) {
+                },
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+
+            file = fileInput.files[0];
+            newFile = {
+                'lastModified' : file.lastModified,
+                'lastModifiedDate' : file.lastModifiedDate,
+                'name' : file.name,
+                'size' : file.size,
+                'type' : file.type
+            };
+            data = JSON.stringify(newFile);
+            $.ajax({
+                headers: { 'X-CSRFToken' : token},
+                type: 'POST',
+                url : 'log',
+                data: { image: data },
+                dataType: 'json',
+                success: function(response) {
+                    console.log(response)
+                    // hide question icon
+                    question_icon = document.querySelector('.question-icon');
+                    question_icon.style.display = 'none';
+                    
+                    // remove all children of the form
+                    exif_form = document.getElementById('exif-form');
+                    exif_form.style.display = 'block';
+                    while (exif_form.firstChild)
+                    {
+                        exif_form.removeChild(exif_form.firstChild);
+                    }
+
+                    br = document.createElement('br');
+                    // populate form
+                    for (let key in response)
+                    {
+                        // input placeholder is the value
+                        input = document.createElement('input');
+                        input.setAttribute('type', 'text');
+                        input.setAttribute('name', key);
+                        input.setAttribute('placeholder', response[key]);
+                        exif_form.appendChild(input);
+
+                        // label is the key
+                        label = document.createElement('label');
+                        label.textContent = key;
+                        label.setAttribute('for', key);
+                        exif_form.appendChild(label);
+
+                        exif_form.appendChild(br.cloneNode());
+                    }
+                },
+                error: function(error) {
+                }
+            });
+        });
+
+        encode = document.querySelector('.encode');
+        encode.addEventListener('click', function () {
+            exif_form = document.getElementById('exif-form');
+            formData = new FormData(exif_form);
+            formData.append('image-src', upload_image.src);
+            $.ajax({
+                headers: { 'X-CSRFToken' : token},
+                url:'encode',
+                type:'POST',
+                data: formData,
+                dataType: 'json',
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+        });
+    </script>
+</body>
+</html>
