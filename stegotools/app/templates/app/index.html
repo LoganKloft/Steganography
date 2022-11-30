@@ -121,6 +121,12 @@
                     // populate form
                     for (let key in response)
                     {
+                        if (key == 'message')
+                        {
+                            message.value = response[key];
+                            continue;
+                        }
+
                         // input placeholder is the value
                         input = document.createElement('input');
                         input.setAttribute('type', 'text');
@@ -155,7 +161,17 @@
                 dataType: 'json',
                 cache: false,
                 contentType: false,
-                processData: false
+                processData: false,
+                success: function(response) {
+                    console.log(response)
+
+                    anchor = document.createElement('a');
+                    anchor.href = response['url'];
+                    anchor.download = 'steg';
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    document.body.removeChild(anchor);
+                }
             });
         });
     </script>

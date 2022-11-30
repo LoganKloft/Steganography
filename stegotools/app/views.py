@@ -26,7 +26,7 @@ def log(request):
     # get url of image
     fss = FileSystemStorage()
     file = fss.url(image_json['name'])
-    print(file)
+    print('log file', file)
 
     # retrieve image exif data
     exif = exf.exf(file)
@@ -44,6 +44,7 @@ def log(request):
         message = lsb_encoder.decode(file)
     print(message)
 
+    data['message'] = message
     return JsonResponse(data)
 
 def encode(request):
@@ -65,15 +66,24 @@ def encode(request):
     print(exif_data)
     print(image_name)
     print(message)
-
-    # encode exif data
-    # exif = exf.exf(image_name)
-
-    # encode message if PNG
     ext = image_name.split('.')[-1]
+    # encode message if PNG
     if (ext.lower() == 'png'):
         lsb_encoder = lsb.lsb()
         lsb_encoder.encode(image_name, message)
 
+    # encode exif data
+    new_url = None
+    exif = exf.exf(image_name)
+    if (ext.lower() == 'png'):
+        new_url = exif.set_exif(exif_data, True)
+    else:
+        new_url = exif.set_exif(exif_data, False)
+
+    # # encode message if PNG
+    # if (ext.lower() == 'png'):
+    #     lsb_encoder = lsb.lsb()
+    #     lsb_encoder.encode(new_url, message)
+
     # send image url back so can be downloaded
-    return JsonResponse({})
+    return JsonResponse({'url' : new_url})

@@ -95,7 +95,6 @@ class lsb:
             for pixel in row:
                 # check if at end of message
                 if self.get_lsb(pixel[2]) == "1":
-                    print(result)
                     return result
                 
                 # not end of message - get the two lsbs in the pixel
